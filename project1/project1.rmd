@@ -15,7 +15,21 @@ opts_chunk$set(fig.align="center", fig.height=4, fig.width=5.5)
 
 **Part 1:** Demonstrate basic command of Markdown by creating a bulleted list with three items, a numbered list with three items, and a sentence that has one word in bold and one word in italics.
 
-*Your text goes here.*
+---
+
+#### Items
+* Item 1
+* Item 2
+* Item 3
+
+#### Things
+1. Thing 1
+2. Thing 2
+3. Thing 3
+
+Quick _brown_ fox __jumps__ over the **lazy** *dog*.
+
+---
 
 **Part 2:** The `mtcars` dataset contains information on car design and performance in 1974:
 
@@ -26,11 +40,11 @@ mtcars
 Use ggplot to make a line plot of the weight of a car (column `wt`) versus its fuel economy, measured in miles/gallon (column `mpg`).
 
 ```{r}
-# your code goes here
+ggplot(mtcars, aes(wt, mpg)) + geom_line()
 ```
 
 Now make a scatter plot (using `geom_point()`) of the weight of the car versus its horse power (`hp`), and color points by its fuel economy.
 
 ```{r}
-# your code goes here
+ggplot(mtcars, aes(wt, hp, color = mpg)) + geom_point()
 ```
