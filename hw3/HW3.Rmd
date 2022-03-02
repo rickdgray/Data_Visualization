@@ -1,0 +1,63 @@
+---
+title: "Homework 3"
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(colorspace)
+library(cowplot)
+opts_chunk$set(fig.align="center", fig.height=4, fig.width=5.5)
+```
+
+**This homework is due on the deadline posted on edX. Please submit a .pdf file of your output and upload a .zip file with your .Rmd file.**
+
+**Problem 1:** For this problem, we will work with the `BA_degrees` dataset. It contains the proportions of Bachelor’s degrees awarded in the US between 1970 and 2015.
+
+```{r message = FALSE}
+BA_degrees <- read_csv("https://wilkelab.org/SDS375/datasets/BA_degrees.csv")
+BA_degrees
+```
+
+From the entire dataset, select a subset of 6 fields of study, using arbitrary criteria. Plot a time series of the proportion of degrees (column `perc`) in this field over time, using facets to show each field. Also plot a straight line fit to the data for each field. You should modify the order of facets to maximize figure appearance and memorability. What do you observe?
+
+**Hint:** To get started, see slides 34 to 44 in the class on getting things into the right order: https://wilkelab.org/DSC385/slides/getting-things-in-order.html#34
+
+```{r}
+# your code goes here
+```
+
+*Your answer goes here.*
+
+
+**Problem 2:** We will work the `txhousing` dataset provided by **ggplot2**. See here for details: https://ggplot2.tidyverse.org/reference/txhousing.html
+
+Consider the number of houses sold in January 2015. There are records for 46 different cities:
+
+```{r}
+txhousing_jan_2015 <- txhousing %>% 
+  filter(year == 2015 & month == 1) %>% 
+  arrange(desc(sales))
+
+print(txhousing_jan_2015, n = nrow(txhousing_jan_2015))
+```
+
+If you wanted to visualize the relative proportion of sales in these different cities, which plot would be most appropriate? A pie chart, a stacked bar chart, or side-by-side bars? Please explain your reasoning. You do not have to make the chart.
+
+**Answer:** *Your answer goes here.*
+
+
+**Problem 3:** Now make a pie chart of the `txhousing_jan_2015` dataset, but show only the four cities with the most sales, plus all others lumped together into "Other". (The code to prepare this lumped dataset has been provided for your convenience.) Make sure the pie slices are arranged in a reasonable order. Choose a reasonable color scale and a clean theme that avoids distracting visual elements.
+
+```{r}
+# data preparation
+top_four <- txhousing_jan_2015$sales[1:4]
+
+txhousing_lumped <- txhousing_jan_2015 %>%
+  mutate(city = ifelse(sales %in% top_four, city, "Other")) %>% 
+  group_by(city) %>%
+  summarize(sales = sum(sales))
+
+# your code goes here
+```
+
