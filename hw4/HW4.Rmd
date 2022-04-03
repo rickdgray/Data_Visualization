@@ -1,0 +1,92 @@
+---
+title: "Homework 4"
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(broom)
+library(glue)
+library(cowplot)
+opts_chunk$set(fig.align="center", fig.height=4, fig.width=5.5)
+```
+
+**This homework is due on the deadline posted on edX. Please submit a .pdf file of your output and upload a .zip file with your .Rmd file.**
+
+For this homework, we will use the `msleep` dataset provided by **ggplot2**. See here for details: https://ggplot2.tidyverse.org/reference/msleep.html
+
+```{r message = FALSE}
+glimpse(msleep)
+```
+ 
+
+**Problem 1:** Visualize the relationship between total amount of sleep and body weight in each mammal classified as a carnivore (`vore == "carni"`). Your plot should include raw data points as well as a linear trendline with confidence interval. What do you observe?
+
+```{r}
+
+msleep %>%
+  filter(vore == "carni") %>%
+  ggplot(aes(bodywt, sleep_total)) +
+  geom_point() +
+  geom_smooth(method="lm", formula = y ~ x) +
+  scale_x_continuous(
+    trans = "log10",
+    breaks = c(0.1, 1, 10, 100, 1000),
+    labels = c("0.1", "1", "10", "100", "1000")
+  ) +
+  labs(
+    x = "Body Weight (kg)",
+    y = "Total Sleep (hrs)",
+    title = "Total Sleep of carni by Body Weight"
+  )
+
+```
+
+By the plot it can be seen that the heavier the carnivore, the more likely they are to sleep less in a given 24 hour period. There is a tighter confidence interval near the 1 to 10 kg weight range meaning we have a greater likelihood of correctly predicting the number of hours these carnivores will sleep than we are able to predict on lighter or heavier carnivores.
+
+
+**Problem 2:** Write a function to create the plot above. Your function should have two inputs: `data`, which is the dataset to plot, and `vore`, which is a string indicating the vore type, such as `"carni"`. Reproduce the plot using your new function.
+
+```{r}
+
+make_vore_plot <- function(data, vore) {
+  data %>%
+    filter(.data$vore == .env$vore) %>%
+    ggplot(aes(bodywt, sleep_total)) +
+    geom_point() +
+    geom_smooth(method="lm", formula = y ~ x) +
+    scale_x_continuous(
+      trans = "log10",
+      breaks = c(0.1, 1, 10, 100, 1000),
+      labels = c("0.1", "1", "10", "100", "1000")
+    ) +
+    labs(
+      x = "Body Weight (kg)",
+      y = "Total Sleep (hrs)",
+      title = glue("Total Sleep of {vore} by Body Weight")
+    )
+}
+
+make_vore_plot(msleep, "carni")
+
+```
+
+
+**Problem 3:** Write code that automatically applies the function you created in Problem 2 to all vore types (you can exclude `NA` values). **Do not write a `for` loop.** How does the relationship between body weight and total amount of sleep vary across vores?
+
+```{r}
+
+make_vore_plot_v2 <- function(vore) {
+  make_vore_plot(msleep, vore)
+}
+
+msleep %>%
+  filter(!is.na(vore)) %>%
+  nest(data = -vore) %>%
+  mutate(plots = map(vore, make_vore_plot_v2)) %>%
+  pull(plots) %>%
+  walk(print)
+
+```
+
+While the number of hours of sleep consistently decreases with an increase in weight, the rate at which the decrease happens varies by the animal's diet. With herbivores, the decrease is the steepest and the confidence interval is the tightest. We can very closely predict the number of hours of sleep they will exhibit based on their weight. For insectivores, they are the least reliable. While the regression does suggest a slight decrease, it is nearly level and the confidence interval is gigantic. It is very possible that there is actually no relation between insectivore's number of hours of sleep in a 24 hour period and their body weight.
