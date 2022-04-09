@@ -1,0 +1,68 @@
+---
+title: "Project 4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(colorspace)
+library(broom)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is the dataset you will be working with:
+
+```{r message = FALSE}
+lemurs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-08-24/lemur_data.csv')
+
+lemurs
+```
+
+More information about the dataset can be found here:
+https://github.com/rfordatascience/tidytuesday/tree/master/data/2021/2021-08-24 and https://www.nature.com/articles/sdata201419.
+
+
+**Question:** Do we believe that the number of wild-born pure-species (not hybrids) has improved over time? Or, to phrase the question another way, do we believe that the __Duke Lemur Center__ (DLC) project been a success thus far in improving the _natural_ growth of _each species'_ population over time?
+
+**Introduction:** To answer this question, we will use the __Lemurs__ dataset provided directly from the DLC project. The dataset includes over eighty thousand data points on over forty thousand individual lemurs of various species dating all the way back to 1966. The crucial columns we will need from the dataset are the lemurs' unique identifiers (_dlc_id_), their estimated date of birth (_dob_), whether they are a hybrid (_hybrid_), and whether their birth was natural or in captivity (_birth_type_).
+
+**Approach:** Because we are specifically concerned with individual species, we will exclude all hybrids. We will produce a count of how many lemurs were born each year segregated by whether they were natural born or not. Do do this, we will first remove all data points with invalid data on any of the four designated columns. We will then filter out all hybrids from the dataset. Because the dataset contains multiple data points for each individual lemur, we will need to filter out by distinct ids so that we are not counting duplicate births. We can then capture the year of birth from the dob column, and produce counts of births for each year.
+
+This process will of course be mapped to each birth type, as we want to compare the rate of growth between captive and wild births. Using linear regressions on each, we may compare the growths of each over time.
+
+**Analysis:**
+
+lm_sum <- penguins %>%
+nest(data = -species) %>%
+mutate(
+fit = map(data, ~lm(flipper_length ~ body_mass, data = .x)),
+glance_out = map(fit, glance)
+) %>%
+select(species, glance_out) %>%
+unnest(cols = glance_out)
+
+```{r }
+
+lemurs %>%
+  filter(!is.na(dlc_id),
+         !is.na(dob),
+         !is.na(birth_type),
+         hybrid == "N",
+         birth_type != "Unk",
+         !duplicated(dlc_id)) %>%
+  mutate(birth_year = as.numeric(format(dob, '%Y'))) %>%
+  select(birth_type, birth_year) %>%
+  table() %>%
+  as.data.frame() %>%
+  nest(data = -birth_type) %>%
+  mutate(
+    fit = map(data, ~lm(Freq ~ birth_year, data = .x)),
+    glance_out = map(fit, glance)
+  ) %>%
+  select(birth_type, glance_out) %>%
+  unnest(cols = glance_out)
+
+```
+
+**Discussion:** *Your discussion of results here.*
+
