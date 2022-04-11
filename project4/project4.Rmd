@@ -22,47 +22,57 @@ More information about the dataset can be found here:
 https://github.com/rfordatascience/tidytuesday/tree/master/data/2021/2021-08-24 and https://www.nature.com/articles/sdata201419.
 
 
-**Question:** Do we believe that the number of wild-born pure-species (not hybrids) has improved over time? Or, to phrase the question another way, do we believe that the __Duke Lemur Center__ (DLC) project been a success thus far in improving the _natural_ growth of _each species'_ population over time?
+**Question:** Do we believe that the weight gain of wild-born, pure-species (not hybrids) has improved over time? Or, to phrase the question another way, do we believe that the __Duke Lemur Center__ (DLC) project been a success thus far in improving the _natural_ growth of _each species'_ weight over time?
 
-**Introduction:** To answer this question, we will use the __Lemurs__ dataset provided directly from the DLC project. The dataset includes over eighty thousand data points on over forty thousand individual lemurs of various species dating all the way back to 1966. The crucial columns we will need from the dataset are the lemurs' unique identifiers (_dlc_id_), their estimated date of birth (_dob_), whether they are a hybrid (_hybrid_), and whether their birth was natural or in captivity (_birth_type_).
+**Introduction:** To answer this question, we will use the __Lemurs__ dataset provided directly from the DLC project. The dataset includes over eighty thousand data points on over forty thousand individual lemurs of various species dating all the way back to 1966. The crucial columns we will need from the dataset are the lemurs' unique identifiers (_dlc_id_), their estimated weight (_weight_g_), whether they are a hybrid (_hybrid_), their age at time of recording (_age_at_wt_d_), and whether their birth was natural or in captivity (_birth_type_).
 
-**Approach:** Because we are specifically concerned with individual species, we will exclude all hybrids. We will produce a count of how many lemurs were born each year segregated by whether they were natural born or not. Do do this, we will first remove all data points with invalid data on any of the four designated columns. We will then filter out all hybrids from the dataset. Because the dataset contains multiple data points for each individual lemur, we will need to filter out by distinct ids so that we are not counting duplicate births. We can then capture the year of birth from the dob column, and produce counts of births for each year.
+**Approach:** Because we are specifically concerned with individual species, we will exclude all hybrids. We will produce a subset of data of the lemurs segregated by whether they were natural born or not. To do this, we will first remove all data points with invalid data on any of the five designated columns. We will then filter out all hybrids from the dataset. We can then capture the weight and ages from the dataset to plot.
 
 This process will of course be mapped to each birth type, as we want to compare the rate of growth between captive and wild births. Using linear regressions on each, we may compare the growths of each over time.
 
 **Analysis:**
-
-lm_sum <- penguins %>%
-nest(data = -species) %>%
-mutate(
-fit = map(data, ~lm(flipper_length ~ body_mass, data = .x)),
-glance_out = map(fit, glance)
-) %>%
-select(species, glance_out) %>%
-unnest(cols = glance_out)
-
 ```{r }
 
-lemurs %>%
+lemurs <- lemurs %>%
   filter(!is.na(dlc_id),
-         !is.na(dob),
+         !is.na(weight_g),
+         !is.na(age_at_wt_d),
          !is.na(birth_type),
          hybrid == "N",
-         birth_type != "Unk",
-         !duplicated(dlc_id)) %>%
-  mutate(birth_year = as.numeric(format(dob, '%Y'))) %>%
-  select(birth_type, birth_year) %>%
-  table() %>%
-  as.data.frame() %>%
+         birth_type != "Unk")
+
+lemurs_lm <- lemurs %>%
   nest(data = -birth_type) %>%
   mutate(
-    fit = map(data, ~lm(Freq ~ birth_year, data = .x)),
+    fit = map(data, ~lm(weight_g ~ age_at_wt_d, data = .x)),
     glance_out = map(fit, glance)
   ) %>%
   select(birth_type, glance_out) %>%
   unnest(cols = glance_out)
 
+lemurs_lm
+
+lemurs %>%
+  ggplot(aes(age_at_wt_d, weight_g, color=birth_type)) +
+  geom_smooth(method="lm", formula = y ~ x) +
+  scale_x_continuous(
+    limits = c(0, 14600),
+    breaks = c(0, 3650, 7300, 10950, 14600),
+    labels = c("0", "10", "20", "30", "40")
+  ) +
+  scale_y_continuous(
+    limits = c(0, 3000)
+  ) +
+  scale_color_discrete(
+    labels = c("Captivity", "Wild")
+  ) +
+  labs(
+    x = "Age (years)",
+    y = "Weight (grams)",
+    title = "Weight Gain of Lemurs over Time by Birth Type",
+    color = "Birth Type"
+  )
+
 ```
 
-**Discussion:** *Your discussion of results here.*
-
+**Discussion:** By the fitment summary table shown first, we can see that the __r.squared__ result from the _captive_ born is less than the _wild_ born. By the plot shown below the table, is is shown that while the wild born growth is slightly higher, it is almost negligible. It is however worth noting that wild born lemurs do tend to be heavier as they have a taller intercept. It could be surmised that wild captive born lemurs do grow and are healthy, wild born are generally healthier as they have likely enjoy their natural diet.
