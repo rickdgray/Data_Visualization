@@ -1,0 +1,53 @@
+---
+title: "Homework 5"
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(ggplot2)
+library(colorspace)
+library(tidyverse)
+library(broom)
+library(sf)
+opts_chunk$set(fig.align="center", fig.height=4, fig.width=5.5)
+```
+
+**This homework is due on the deadline posted on edX. Please submit a .pdf file of your output and upload a .zip file with your .Rmd file.**
+
+**Problem 1:** Use the color picker app from the **colorspace** package (`colorspace::choose_color()`) to create a qualitative color scale containing five colors. One of the five colors should be `#5C9E76`, so you need to find four additional colors that go with this one.
+
+```{r fig.width = 6, fig.height = 3}
+# replace "#FFFFFF" with your own colors
+colors <- c("#5C9E76", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF")
+swatchplot(colors)
+```
+
+
+For the rest of this homework, we will be working with the `midwest_clean` dataset, which is a cleaned up version of the **ggplot2** `midwest` dataset.
+
+```{r}
+midwest_clean <- midwest %>% 
+  select(
+    state, county, area, popdensity, percbelowpoverty, inmetro
+  ) %>%        # keep only a subset of data
+  na.omit()    # remove any rows with missing data
+```
+
+
+**Problem 2:** Perform a PCA of the `midwest_clean` dataset and make a rotation plot of components 1 and 2.
+
+```{r}
+# your code goes here
+```
+
+
+**Problem 3:** Make a scatter plot of PC 2 versus PC 1 and color by state. You should use the custom colorscale you created in Problem 1. Then use the rotation plot from Problem 2 to describe where Chicago, Illinois can be found on the scatter plot. Provide any additional evidence used to support your answer.
+
+```{r}
+# your code goes here
+```
+
+*Your answer goes here.*
+
+
+
