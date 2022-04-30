@@ -1,0 +1,37 @@
+---
+title: "Project 5"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(colorspace)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in the dataset you will be working with:
+
+```{r message = FALSE}
+
+# Your R code here
+
+```
+
+*Provide more information about the dataset here.*
+
+**Question:** *Your question here.*
+
+**Introduction:** *Your introduction here.*
+
+**Approach:** *Your approach here.*
+
+**Analysis:**
+
+```{r }
+
+# Your R code here
+
+```
+
+**Discussion:** *Your discussion of results here.*
+
