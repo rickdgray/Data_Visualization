@@ -5,6 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(broom)
 library(colorspace)
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -13,25 +14,118 @@ Read in the dataset you will be working with:
 
 ```{r message = FALSE}
 
-# Your R code here
+coffee_ratings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-07/coffee_ratings.csv')
 
 ```
 
-*Provide more information about the dataset here.*
+**Question:** Is there a correlation between the processing method of coffee beans and their scoring by professionals?
 
-**Question:** *Your question here.*
+**Introduction:** To answer this question, We will be using the __coffee_ratings__ dataset. It is part of the _Coffee Quality Database_ provided by Buzzfeed Data Scientist James LeDoux. The dataset includes over a thousand data points on various coffee bean varieties. The crucial columns we will need from the dataset are the coffee beans' professionally scored characteristics (aroma, flavor, aftertaste, acidity, body, balance), their overall score (total_cup_points), and what type of processing the beans underwent (processing_method).
 
-**Introduction:** *Your introduction here.*
-
-**Approach:** *Your approach here.*
+**Approach:** We will use a PCA analysis to determine which characteristics are most indicative of processing method. After isolating the strongest principal components, we will use a k means clustering to find where the clusters for each processing method lie. The clustering will give us the final result on the strength and predictability of the processing method.
 
 **Analysis:**
 
+First we run a PCA to determine the best columns to run a kmeans on.
+
 ```{r }
 
-# Your R code here
+pca_fit <- coffee_ratings %>%
+  na.omit() %>%
+  select(where(is.numeric)) %>%
+  scale() %>%
+  prcomp()
+
+summary(pca_fit)
 
 ```
 
-**Discussion:** *Your discussion of results here.*
+Next, we filter down to the relevant columns for further processing. We plot a rotation plot of the new PCA to show strength of characteristics.
+
+```{r }
+
+coffee_ratings <- coffee_ratings %>%
+  select(
+    total_cup_points, aroma, flavor, aftertaste, acidity, body, balance, processing_method
+  ) %>%
+  na.omit()
+
+pca_fit <- coffee_ratings %>%
+  select(where(is.numeric)) %>%
+  scale() %>%
+  prcomp()
+
+arrow_style <- arrow(
+  angle = 20, length = grid::unit(8, "pt"),
+  ends = "first", type = "closed"
+)
+
+pca_fit %>%
+  tidy(matrix = "rotation") %>%
+  pivot_wider(
+    names_from = "PC",
+    values_from = "value",
+    names_prefix = "PC"
+  ) %>%
+  ggplot(aes(PC1, PC2)) +
+  geom_segment(
+    xend = 0,
+    yend = 0,
+    arrow = arrow_style
+  ) +
+  geom_text(aes(label = column), hjust = 1) +
+  xlim(-1.5, 1.0) +
+  ylim(-1.0, 0.5) +
+  coord_fixed() +
+  labs(title = "Rotation Plot")
+
+```
+
+We then plot a PCA scatter plot for comparison with the k means plot.
+
+```{r }
+
+pca_fit %>%
+  augment(coffee_ratings) %>%
+  ggplot(aes(.fittedPC1, .fittedPC2)) +
+  geom_point(aes(color = processing_method)) +
+  xlim(-10, 10) +
+  ylim(-2.5, 2.5) +
+  labs(
+    title = "PCA Scatterplot",
+    x = "PC1",
+    y = "PC2",
+    color = "Processing Method"
+  )
+
+```
+
+Finally, we run a k means with the correct number of clusters and plot. We can then compare this plot with the PCA scatterplot.
+
+```{r }
+
+km_fit <- pca_fit$x[,1:2] %>%
+  kmeans(centers = 5, nstart = 10)
+
+km_fit %>%
+  augment(pca_fit$x[,1:2]) %>%
+  ggplot() +
+  aes(PC1, PC2) +
+  geom_point(
+    aes(color = .cluster)
+  ) +
+  geom_point(
+    data = tidy(km_fit),
+    aes(fill = cluster),
+    shape = 21, color = "black", size = 4
+  ) +
+  guides(color = "none") +
+  labs(
+    title = "K Means Clustering",
+    fill = "Cluster"
+  )
+
+```
+
+**Discussion:** Based on the results seen above, we can see that the PCA scatter plot does not show much differenciation among the processing methods. Still, we run a k means clustering to verify. Because the cluster does not follow any pattern seen in the PCA scatter plot, we can strongly conclude that a correlation does not exist between coffee ratings and the processing method of coffee bean. Critics do not have a preference for a particular processing method nor does a particular processing method particularly degrade or improve the result of a coffee bean.
 
